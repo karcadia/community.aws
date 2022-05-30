@@ -38,6 +38,7 @@ options:
         description:
             - One or more services to get details for
         required: false
+        aliases: [ name ]
         type: list
         elements: str
 extends_documentation_fragment:
@@ -214,7 +215,7 @@ def main():
         details=dict(type='bool', default=False),
         events=dict(type='bool', default=True),
         cluster=dict(),
-        service=dict(type='list', elements='str')
+        service=dict(type='list', aliases=['name'], elements='str')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)

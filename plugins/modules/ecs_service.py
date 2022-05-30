@@ -33,6 +33,7 @@ options:
         description:
           - The name of the service.
         required: true
+        aliases: [ service ]
         type: str
     cluster:
         description:
@@ -600,7 +601,6 @@ class EcsServiceManager:
         # desired count is not required if scheduling strategy is daemon
         if desired_count is not None:
             params['desiredCount'] = desired_count
-
         if scheduling_strategy:
             params['schedulingStrategy'] = scheduling_strategy
         response = self.ecs.create_service(**params)
@@ -655,7 +655,7 @@ class EcsServiceManager:
 def main():
     argument_spec = dict(
         state=dict(required=True, choices=['present', 'absent', 'deleting']),
-        name=dict(required=True, type='str'),
+        name=dict(required=True, aliases=['service'], type='str'),
         cluster=dict(required=False, type='str'),
         task_definition=dict(required=False, type='str'),
         load_balancers=dict(required=False, default=[], type='list', elements='dict'),
