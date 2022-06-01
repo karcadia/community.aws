@@ -144,12 +144,19 @@ class EcsClusterManager:
                 return c
         raise Exception("Unknown problem describing cluster %s." % cluster_name)
 
-    def create_cluster(self, clusterName='default'):
-        response = self.ecs.create_cluster(clusterName=clusterName)
+    def create_cluster(self, cluster_name, capacity_providers, default_capacity_provider_strategy):
+
+        params = dict(clusterName=cluster_name)
+        if capacity_providers:
+            params['capacityProviders'] = capacity_providers
+        if default_capacity_provider_strategy:
+            params['defaultCapacityProviderStrategy'] = default_capacity_provider_strategy
+
+        response = self.ecs.create_cluster(**params)
         return response['cluster']
 
-    def delete_cluster(self, clusterName):
-        return self.ecs.delete_cluster(cluster=clusterName)
+    def delete_cluster(self, cluster_name):
+        return self.ecs.delete_cluster(cluster=cluster_name)
 
 
 def main():
@@ -158,7 +165,9 @@ def main():
         state=dict(required=True, choices=['present', 'absent', 'has_instances']),
         name=dict(required=True, type='str'),
         delay=dict(required=False, type='int', default=10),
-        repeat=dict(required=False, type='int', default=10)
+        repeat=dict(required=False, type='int', default=10),
+        capacity_providers=dict(required=False, type='list', default=[]),
+        default_capacity_provider_strategy=dict(required=False, type=list, default=[])
     )
     required_together = [['state', 'name']]
 
@@ -181,7 +190,10 @@ def main():
         else:
             if not module.check_mode:
                 # doesn't exist. create it.
-                results['cluster'] = cluster_mgr.create_cluster(module.params['name'])
+                results['cluster'] = cluster_mgr.create_cluster(
+                    module.params['name'],
+                    module.params['capacity_providers'],
+                    module.params['default_capacity_provider_strategy'])
             results['changed'] = True
 
     # delete the cluster
