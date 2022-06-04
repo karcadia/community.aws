@@ -562,7 +562,7 @@ def main():
         scan_on_push=(dict(required=False, type='bool', default=False)),
         encryption_configuration=dict(required=False, type='dict', default={}, options=dict(
             encryption_type=dict(required=False, choices=['AES256', 'KMS'], default='AES256'),
-            kms_key=dict(required=False, default='')
+            kms_key=dict(required=False)
             )
         )
     )
