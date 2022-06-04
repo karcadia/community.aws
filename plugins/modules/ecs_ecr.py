@@ -572,8 +572,8 @@ def main():
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, mutually_exclusive=mutually_exclusive)
 
-    if module.params['encryption_configuration']['encryption_type'] == 'AES256' and len(module.params['encryption_configuration']['kms_key']) > 0:
-        module.fail_json(msg="You cannot provide a kms_key with encryption_type AES256.")
+#    if module.params['encryption_configuration']['encryption_type'] == 'AES256' and len(module.params['encryption_configuration']['kms_key']) > 0:
+#        module.fail_json(msg="You cannot provide a kms_key with encryption_type AES256.")
 
     if module.params['encryption_configuration']['encryption_type'] == 'KMS' and len(module.params['encryption_configuration']['kms_key']) < 1:
         module.fail_json(msg="You must provide a kms_key when using encryption_type KMS.")
