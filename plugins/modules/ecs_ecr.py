@@ -567,8 +567,8 @@ def main():
         purge_lifecycle_policy=dict(required=False, type='bool'),
         scan_on_push=(dict(required=False, type='bool', default=False)),
         encryption_configuration=dict(required=False, type='dict', default={}, options=dict(
-            encryption_type=dict(required=True, choices=['AES256', 'KMS'], default='KMS'),
-            kms_key=dict(required=True, default='')
+            encryption_type=dict(required=False, choices=['AES256', 'KMS'], default='AES256'),
+            kms_key=dict(required=False, default='')
             )
         )
     )
