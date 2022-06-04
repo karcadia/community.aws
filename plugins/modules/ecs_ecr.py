@@ -524,7 +524,7 @@ def run(ecr, params):
                     response = ecr.put_image_scanning_configuration(registry_id, name, scan_on_push)
 
             if encryption_configuration:
-                if encryptionConfiguration in original_scan_on_push.keys():
+                if 'encryptionConfiguration' in original_scan_on_push.keys():
                     pass
                 else:
                     module.fail_json(msg="You cannot add an encryption configuration to an existing repo.")
