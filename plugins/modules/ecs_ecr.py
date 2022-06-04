@@ -524,7 +524,7 @@ def run(ecr, params):
                     response = ecr.put_image_scanning_configuration(registry_id, name, scan_on_push)
 
             if encryption_configuration:
-                original_encryption_configuration = ecr.get_repository(registry_id, name)[1].encryptionConfiguration
+                original_encryption_configuration = ecr.get_repository(registry_id, name).encryptionConfiguration
                 if original_encryption_configuration:
                     pass
                 else:
