@@ -561,7 +561,7 @@ def main():
         purge_lifecycle_policy=dict(required=False, type='bool'),
         scan_on_push=(dict(required=False, type='bool', default=False)),
         encryption_configuration=dict(required=False, type='dict', default={}, options=dict(
-            encryption_type=dict(required=False, choices=['AES256', 'KMS'], default='AES256'),
+            encryption_type=dict(required=False, choices=['AES256', 'KMS'], default='KMS'),
             kms_key=dict(required=False)
             )
         )
@@ -574,9 +574,6 @@ def main():
 
 #    if module.params['encryption_configuration']['encryption_type'] == 'AES256' and len(module.params['encryption_configuration']['kms_key']) > 0:
 #        module.fail_json(msg="You cannot provide a kms_key with encryption_type AES256.")
-
-    if module.params['encryption_configuration']['encryption_type'] == 'KMS' and len(module.params['encryption_configuration']['kms_key']) < 1:
-        module.fail_json(msg="You must provide a kms_key when using encryption_type KMS.")
 
     ecr = EcsEcr(module)
     passed, result = run(ecr, module.params)
