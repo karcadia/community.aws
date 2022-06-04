@@ -241,17 +241,21 @@ class EcsEcr:
         except is_boto3_error_code('RepositoryPolicyNotFoundException'):
             return None
 
-    def create_repository(self, registry_id, name, image_tag_mutability):
+    def create_repository(self, registry_id, name, image_tag_mutability, encryption_configuration):
         if registry_id:
             default_registry_id = self.sts.get_caller_identity().get('Account')
             if registry_id != default_registry_id:
                 raise Exception('Cannot create repository in registry {0}.'
                                 'Would be created in {1} instead.'.format(registry_id, default_registry_id))
 
+        encryptionConfiguration = snake_dict_to_camel_dict(encryption_configuration)
+
         if not self.check_mode:
             repo = self.ecr.create_repository(
                 repositoryName=name,
-                imageTagMutability=image_tag_mutability).get('repository')
+                imageTagMutability=image_tag_mutability,
+                encryptionConfiguration=encryptionConfiguration
+                ).get('repository')
             self.changed = True
             return repo
         else:
@@ -403,6 +407,7 @@ def run(ecr, params):
         lifecycle_policy_text = params['lifecycle_policy']
         purge_lifecycle_policy = params['purge_lifecycle_policy']
         scan_on_push = params['scan_on_push']
+        encryption_configuration = params['encryption_configuration']
 
         # Parse policies, if they are given
         try:
@@ -429,7 +434,7 @@ def run(ecr, params):
             result['created'] = False
 
             if not repo:
-                repo = ecr.create_repository(registry_id, name, image_tag_mutability)
+                repo = ecr.create_repository(registry_id, name, image_tag_mutability, encryption_configuration)
                 result['changed'] = True
                 result['created'] = True
             else:
@@ -503,13 +508,20 @@ def run(ecr, params):
                 original_policy = ecr.get_repository_policy(registry_id, name)
                 if original_policy:
                     result['policy'] = original_policy
-
+            
             original_scan_on_push = ecr.get_repository(registry_id, name)
             if original_scan_on_push is not None:
                 if scan_on_push != original_scan_on_push['imageScanningConfiguration']['scanOnPush']:
                     result['changed'] = True
                     result['repository']['imageScanningConfiguration']['scanOnPush'] = scan_on_push
                     response = ecr.put_image_scanning_configuration(registry_id, name, scan_on_push)
+
+            if encryption_configuration:
+                original_encryption_configuration = ecr.get_repository(registry_id, name)[1].encryptionConfiguration
+                if original_encryption_configuration:
+                    pass
+                else:
+                    module.fail_json(msg="You cannot add an encryption configuration to an existing repo.")
 
         elif state == 'absent':
             result['name'] = name
@@ -547,11 +559,22 @@ def main():
         purge_policy=dict(required=False, type='bool'),
         lifecycle_policy=dict(required=False, type='json'),
         purge_lifecycle_policy=dict(required=False, type='bool'),
-        scan_on_push=(dict(required=False, type='bool', default=False))
+        scan_on_push=(dict(required=False, type='bool', default=False)),
+        encryption_configuration=dict(required=False, type='dict', default={}, options=dict(
+            encryption_type=dict(required=True, choices=['AES256', 'KMS'], default='KMS'),
+            kms_key=dict(required=True, default='')
+            )
+        )
     )
     mutually_exclusive = [
         ['policy', 'purge_policy'],
         ['lifecycle_policy', 'purge_lifecycle_policy']]
+
+    if encryption_configuration['kms_key'] and len(encryption_configuration['kms_key']) > 0:
+        if encryption_configuration['encryption_type'] == 'KMS':
+            pass
+        else:
+            module.fail_json(msg="KMS encryption type must be selected when a kms_key is provided.")
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, mutually_exclusive=mutually_exclusive)
 
