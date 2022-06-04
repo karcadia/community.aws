@@ -249,12 +249,6 @@ class EcsEcr:
                 raise Exception('Cannot create repository in registry {0}.'
                                 'Would be created in {1} instead.'.format(registry_id, default_registry_id))
 
-        if encryption_configuration['encryption_type'] == 'AES256' and len(encryption_configuration['kms_key']) > 0:
-            module.fail_json(msg="You cannot provide a kms_key with encryption_type AES256.")
-
-        if encryption_configuration['encryption_type'] == 'KMS' and len(encryption_configuration['kms_key']) < 1:
-            module.fail_json(msg="You must provide a kms_key when using encryption_type KMS.")
-
         encryptionConfiguration = snake_dict_to_camel_dict(encryption_configuration)
 
         if not self.check_mode:
@@ -527,7 +521,7 @@ def run(ecr, params):
                 if 'encryptionConfiguration' in original_scan_on_push.keys():
                     pass
                 else:
-                    module.fail_json(msg="You cannot add an encryption configuration to an existing repo.")
+                    result['exception'] = "You cannot add an encryption configuration to an existing repo."
 
         elif state == 'absent':
             result['name'] = name
@@ -577,6 +571,12 @@ def main():
         ['lifecycle_policy', 'purge_lifecycle_policy']]
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True, mutually_exclusive=mutually_exclusive)
+
+    if module.params.encryption_configuration['encryption_type'] == 'AES256' and len(module.params.encryption_configuration['kms_key']) > 0:
+        module.fail_json(msg="You cannot provide a kms_key with encryption_type AES256.")
+
+    if module.params.encryption_configuration['encryption_type'] == 'KMS' and len(module.params.encryption_configuration['kms_key']) < 1:
+        module.fail_json(msg="You must provide a kms_key when using encryption_type KMS.")
 
     ecr = EcsEcr(module)
     passed, result = run(ecr, module.params)
